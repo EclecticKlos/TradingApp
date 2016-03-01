@@ -11,6 +11,20 @@ var getStocksFriendsAreTrading = function(currentUserID, callGetFriendsListForUs
   return alertStringsList;
 };
 
+  var TradingStatus =  function() {
+    this.hasBought = false,
+    this.hasSold = false
+  };
+
+  TradingStatus.prototype.updateStatus = function(tradeAction) {
+    if (tradeAction === "BUY") {
+      this.hasBought = true;
+    }
+    else if (tradeAction === "SELL") {
+     this.hasSold = true;
+    }
+  }
+
 var callGetFriendsListForUser = function(currentUserID) {
   var friendsListForUser = getFriendsListForUser(currentUserID);
   if (friendsListForUser.length !== 0) {
@@ -51,33 +65,28 @@ var getFriendsBuySellPerTickerAndRemoveOldTrades = function(friendsTransactionLi
     return friendsTransactionList;
   }
   for (var i=0; i<friendsTransactionList.length; i++){
-    var friendBuySellPerTicker = {};
+    var friendTradingStatusPerTicker = {};
     for (var j=0; j<friendsTransactionList[i].length; j++){
 
       if (isValidTransaction(friendsTransactionList[i][j])){
-        var buyOrSell = friendsTransactionList[i][j].split(",")[1];
+        //“5,SELL,GOOG”
+        var tradingAction = friendsTransactionList[i][j].split(",")[1];
         var ticker = friendsTransactionList[i][j].split(",")[2];
+        var friendsTradingStatus;
 
-        if (ticker in friendBuySellPerTicker) {
-          if (friendBuySellPerTicker[ticker].buy === false && buyOrSell === "BUY") {
-            friendBuySellPerTicker[ticker].buy = true;
-          }
-          else if (friendBuySellPerTicker[ticker].sell === false && buyOrSell === "SELL") {
-            friendBuySellPerTicker[ticker].sell = true;
-          }
+          debugger;
+        if (friendTradingStatusPerTicker[ticker]) {
+         friendsTradingStatus[ticker] = friendsTradingStatus.updateStatus(tradingAction);
         }
         else {
-          friendBuySellPerTicker[ticker] = {buy:false, sell:false};
-          if (buyOrSell === "BUY") {
-            friendBuySellPerTicker[ticker].buy = true;
-          }
-          else {
-            friendBuySellPerTicker[ticker].sell = true;
-          }
+          friendsTradingStatus = new TradingStatus;
         }
+        friendsTradingStatus.updateStatus(tradingAction);
+        // TO DO: Line below necessary?
+        friendTradingStatusPerTicker[ticker] = friendsTradingStatus;
       }
     }
-    friendsBuySellPerTickerList.push(friendBuySellPerTicker);
+    friendsBuySellPerTickerList.push(friendTradingStatusPerTicker);
   }
   return friendsBuySellPerTickerList;
 };
@@ -86,16 +95,24 @@ var getTickerTransactionCounts = function(friendsBuySellPerTickerList){
   var tickerTransactionCounts = {};
 
   for (var i=0; i<friendsBuySellPerTickerList.length; i++){
-    for (var ticker in friendsBuySellPerTickerList[i]){
+    var singleFriendTickerNetCounts = friendsBuySellPerTickerList[i];
+    for (var ticker in singleFriendTickerNetCounts){
       if ((ticker in tickerTransactionCounts) !== true) {
         tickerTransactionCounts[ticker] = 0;
       }
-      if (friendsBuySellPerTickerList[i][ticker].buy === true && friendsBuySellPerTickerList[i][ticker].sell === false){
+      if (singleFriendTickerNetCounts[ticker].hasBought === true && singleFriendTickerNetCounts[ticker].hasSold === false) {
         tickerTransactionCounts[ticker] = tickerTransactionCounts[ticker] +1;
       }
-      else if (friendsBuySellPerTickerList[i][ticker].buy === false && friendsBuySellPerTickerList[i][ticker].sell === true){
+      else if (singleFriendTickerNetCounts[ticker].hasBought === false && singleFriendTickerNetCounts[ticker].hasSold === true) {
         tickerTransactionCounts[ticker] = tickerTransactionCounts[ticker] -1;
       }
+      // if (friendsBuySellPerTickerList[i][ticker].buy === true && friendsBuySellPerTickerList[i][ticker].sell === false){
+      //   tickerTransactionCounts[ticker] = tickerTransactionCounts[ticker] +1;
+      // }
+      // else if (friendsBuySellPerTickerList[i][ticker].buy === false && friendsBuySellPerTickerList[i][ticker].sell === true){
+      //   tickerTransactionCounts[ticker] = tickerTransactionCounts[ticker] -1;
+      // }
+
     }
   }
 
@@ -244,12 +261,13 @@ var getTradeTransactionsForUser = function(friendUserID) {
   var oneSellMakesCountZero = [validBuyApple, validBuyApple, validBuyApple, validSellApple]; // 0
   var noTradesAtAll = [];
   var invalidDatesNotCounted = [invalidSellTSLA, invalidSellApple, invalidBuyGOOG, validSellTSLA]; // 1 TSLA SELL
+  var oneFriendOneStock = [validBuyApple];
 
-  var transactions = [fourAPPLBuysThreeFBSellsTwoTSLABuysOneGOOGSell, countTieWithBuys, countTieWithSells, countTieWithBuySell, oneSellMakesCountZero, noTradesAtAll, invalidDatesNotCounted];
+  var transactions = [fourAPPLBuysThreeFBSellsTwoTSLABuysOneGOOGSell, countTieWithBuys, countTieWithSells, countTieWithBuySell, oneSellMakesCountZero, noTradesAtAll, invalidDatesNotCounted, oneFriendOneStock];
 
   return transactions[friendUserID];
 
 
 };
 
-getStocksFriendsAreTrading(5, callGetFriendsListForUser, getTradeTransactionsForUser, isValidTransaction, getFriendsBuySellPerTickerAndRemoveOldTrades, getTickerTransactionCounts, sortCountsAlphabeticallyByTickers, buildNonZeroCountTickerTuples, sortAlphabeticallySortedCountsByCount, makeAlertStrings)
+getStocksFriendsAreTrading(4, callGetFriendsListForUser, getTradeTransactionsForUser, isValidTransaction, getFriendsBuySellPerTickerAndRemoveOldTrades, getTickerTransactionCounts, sortCountsAlphabeticallyByTickers, buildNonZeroCountTickerTuples, sortAlphabeticallySortedCountsByCount, makeAlertStrings)

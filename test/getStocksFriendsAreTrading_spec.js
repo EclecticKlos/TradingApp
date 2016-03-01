@@ -27,6 +27,10 @@ describe('getStocksFriendsAreTrading', function () {
     expect(getStocksFriendsAreTrading(0, callGetFriendsListForUser, getTradeTransactionsForUser, isValidTransaction, getFriendsBuySellPerTickerAndRemoveOldTrades, getTickerTransactionCounts, sortCountsAlphabeticallyByTickers, buildNonZeroCountTickerTuples, sortAlphabeticallySortedCountsByCount, makeAlertStrings)).toEqual(["1,BUY,APPL", "1,SELL,FB", "1,BUY,GOOG", "1,SELL,TSLA"]);
   });
 
+  it('returns the correct count for one friend one stock', function () {
+    expect(getStocksFriendsAreTrading(7, callGetFriendsListForUser, getTradeTransactionsForUser, isValidTransaction, getFriendsBuySellPerTickerAndRemoveOldTrades, getTickerTransactionCounts, sortCountsAlphabeticallyByTickers, buildNonZeroCountTickerTuples, sortAlphabeticallySortedCountsByCount, makeAlertStrings)).toEqual(["1,BUY,APPL"]);
+  });
+
   it('sorts tied buys alphabetically first', function() {
     expect(getStocksFriendsAreTrading(1, callGetFriendsListForUser, getTradeTransactionsForUser, isValidTransaction, getFriendsBuySellPerTickerAndRemoveOldTrades, getTickerTransactionCounts, sortCountsAlphabeticallyByTickers, buildNonZeroCountTickerTuples, sortAlphabeticallySortedCountsByCount, makeAlertStrings)).toEqual(["1,BUY,APPL", "1,BUY,FB"]);
   });
