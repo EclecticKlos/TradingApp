@@ -10,89 +10,150 @@
 // deal n cards face-up
 // fold
 
+var Card = function(suit, rank) {
+  this.suit = suit;
+  this.rank = rank;
+};
+
+var Deck = function(){
+  this.cards = [];
+};
+
+Deck.prototype.makeDeck = function(numOfCardPacksInDeck){
+  var suits = ["S","C","H","D"];
+  var ranks = ["2","3","4","5","6","7","8","9","10","J","Q","K","A"];
+
+  if (numOfCardPacksInDeck === undefined) {
+    numOfCardPacksInDeck = 1;
+  }
+  for (var n=0; n < numOfCardPacksInDeck; n++) {
+    for (var i=0; i<suits.length; i++){
+      for (var j=0; j<ranks.length; j++){
+        this.cards.push(new Card(suits[i], ranks[j]));
+      }
+    }
+  }
+  return this;
+};
+
+Deck.prototype.shuffle = function(numOfSingleCardShuffles){
+  for(var n=0; n < numOfSingleCardShuffles; n++){
+    for(var j=0; j < this.cards.length; j++){
+      var k = Math.floor(Math.random() * this.cards.length);
+      var temp = this.cards[k];
+      this.cards[k] = this.cards[j];
+      this.cards[j] = temp;
+    }
+  }
+};
+
+Deck.prototype.cut = function(pointInDeckToCutBefore){
+  var deck = this.cards;
+  if (deck.length > 0) {
+    var chunk = deck.splice(0,pointInDeckToCutBefore);
+    var addCardsFromChunkToBackOfDeck = function(element){
+      deck.push(element);
+    };
+    chunk.forEach(addCardsFromChunkToBackOfDeck);
+    return deck;
+  } else {
+    throw "There are no cards in the deck!";
+  }
+};
+
+Deck.prototype.dealOneCard = function() {
+  if (this.cards.length > 0) {
+    return this.cards.pop();
+  } else {
+    throw "Not enough cards in the deck.";
+  }
+};
+
+Deck.prototype.discardOneCard = function() {
+  if (this.cards.length > 0) {
+    this.cards.pop();
+    return true;
+  } else {
+    throw "Not enough cards in the deck.";
+  }
+};
 
 
 
-// var deckOfCards = function(){
-//   this.cards = [];
-// }
 
-// deckOfCards.prototype.makeDeck = function(numOfCardPacksForDeck){
-//   var suits = ["S","C","H","D"];
-//   var ranks = ["2","3","4","5","6","7","8","9","10","J","Q","K","A"];
+var Game = function(numOfCardPacksInDeck){
+  this.gameDeck = new Deck();
+  this.gameDeck.makeDeck(numOfCardPacksInDeck);
+  this.gameDeck.shuffle(500);
+  this.hands;
+};
 
-//   for (var n=0; n < numOfCardPacksForDeck; n++) {
-//     for (var i=0; i<suits.length; i++){
-//       for (var j=0; j<ranks.length; j++){
-//         this.cards.push(ranks[j] + suits[i]);
-//       }
-//     }
-//   }
-// }
+Game.prototype.makeHands = function(numOfPlayers, cardsPerPlayer){
+  var hands = {};
+  var cardsDealtPerPlayer = 1;
+  for (var i=1; i <= numOfPlayers; i++){
+    var playerID = "Player" + i;
+    hands[playerID] = {};
+  }
+  for (var j=1; j <= (cardsPerPlayer); j++) {
+    for (var player in hands){
+      var cardID = "Card" + cardsDealtPerPlayer;
+      hands[player][cardID] = this.gameDeck.dealOneCard();
+    }
+    cardsDealtPerPlayer++;
+  }
+  return hands;
+};
 
-// deckOfCards.prototype.shuffle = function(numOfSingleCardShuffles){
-//   for(var n=0; n < numOfSingleCardShuffles; n++){
-//     for(var j=0; j < this.cards.length; j++){
-//       var k = Math.floor(Math.random() * this.cards.length);
-//       var temp = this.cards[k];
-//       this.cards[k] = this.cards[j];
-//       this.cards[j] = temp;
-//     }
-//   }
-// }
-
-// deckOfCards.prototype.cut = function(pointInDeckToCutBefore){
-//   var deck = this.cards;
-//   if (deck.length > 0) {
-//     var chunk = deck.splice(0,pointInDeckToCutBefore);
-//     var addCardsFromChunkToBackOfDeck = function(element){
-//       deck.push(element)
-//     }
-//     chunk.forEach(addCardsFromChunkToBackOfDeck);
-//     return deck;
-//   } else {
-//     throw "There are no cards in the deck!";
-//   }
-// }
-
-// deckOfCards.prototype.dealOneCardFaceDown = function() {
-//   if (this.cards.length > 0) {
-//     return this.cards.pop();
-//   } else {
-//     throw "Not enough cards in the deck.";
-//   }
-// }
-
-// deckOfCards.prototype.dealPlayersOneCardAtATimePerPlayer = function(cardsPerPlayer, numOfPlayers) {
-//   var deck = this.cards;
-//   debugger;
-//   if (this.cards.length >= (cardsPerPlayer * numOfPlayers)) {
-//     for (var i=0; i <= cardsPerPlayer; i++) {
-//       for (var j=0; j <= numOfPlayers; j++) {
-//         deck.dealOneCardFaceDown();
-//       }
-//     }
-//   }
-//   else {
-//     throw "There are not enough cards left in the deck, time to make a new one.";
-//   }
-// }
-
-// deckOfCards.prototype.dealPlayersNCardsAtATimePerPlayer = function(totalCardsPerPlayer, numOfPlayers, cardsAtATime) {
-//   if (this.cards.length >= (totalCardsPerPlayer * numOfPlayers)) {
-//     for (var i=0; i <= totalCardsPerPlayer) {
-//       for (var j=0; j <= numOfPlayers; j++) {
-//         while (n <= cardsAtATime) {
-//           return this.cards.pop();
-//         }
-//       }
-//     }
-//   }
-//   else {
-//     throw "There are not enough cards left in the deck, time to make a new one.";
-//   }
-// }
+Game.prototype.communityCards = function(numOfCards) {
+  var communityCards = {};
+  for (var i=1; i <= numOfCards; i++) {
+    var cardNumber = "Card" + i;
+    communityCards[cardNumber] = this.gameDeck.dealOneCard();
+  }
+};
 
 
 
-// // deckOfCards.prototype.deal = function(numOfPlayers, numOf)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
